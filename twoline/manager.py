@@ -6,7 +6,7 @@ import multiprocessing
 import time
 import uuid
 
-from twoline.web import app
+from twoline.web import app, HttpResponseNotFound
 from twoline.lcd import LcdManager
 
 
@@ -26,13 +26,16 @@ def web_command(fn):
             fn.func_name,
             args
         )
-        response = fn(*args)
-        logger.debug(
-            'Response %s',
-            response
-        )
-        if response is not None:
-            self.send_web_data('response', response)
+        try:
+            response = fn(*args)
+            logger.debug(
+                'Response %s',
+                response
+            )
+            if response is not None:
+                self.send_web_data('response', response)
+        except Exception as e:
+            self.send_web_data('error', e)
 
     WEB_COMMANDS[fn.func_name] = wrapped
     return wrapped
@@ -74,20 +77,29 @@ class Manager(object):
         self.default_message = {
             'color': (255, 255, 255),
             'backlight': True,
-            'interval': 10
+            'interval': 5
         }
         self.default_flash = {
             'color': (255, 0, 0),
             'backlight': True,
-            'interval': 3
+            'timeout': 5
         }
         self.flash = None
         self.flash_until = None
         self.messages = []
-        self.message_id = None
+        self._message_id = None
         self.until = None
 
         self.sleep = 0.2
+
+    @property
+    def message_id(self):
+        return self._message_id
+
+    @message_id.setter
+    def message_id(self, value):
+        logger.debug('Setting message_id to %s', self._message_id)
+        self._message_id = value
 
     def run(self):
         logger.info(
@@ -211,6 +223,18 @@ class Manager(object):
             self.message_id
         )
 
+    def delete_message(self, message_id):
+        if self.message_id == message_id:
+            self.increment_index()
+            if self.message_id == message_id:
+                # If we just incremented, and are still at the same index
+                # there is only one message in the list, and we're
+                # in the process of deleting it.
+                self.message_id = None
+        idx = self.get_message_index_by_id(message_id)
+        message = self.messages[idx]
+        self.messages.remove(message)
+
     def handle_expirations(self):
         utcnow = datetime.datetime.utcnow()
         for message in self.messages:
@@ -223,12 +247,10 @@ class Manager(object):
                     'Message contents: %s',
                     message
                 )
-                if message['id'] == self.message_id:
-                    self.increment_index()
-                self.messages.remove(message)
+                self.delete_message(message['id'])
         logger.debug('Flash Until: %s', self.flash_until)
         logger.debug('Message Until: %s', self.until)
-        if self.flash and self.flash_until < utcnow:
+        if self.flash and self.flash_until and self.flash_until < utcnow:
             logger.info('Flash message has expired')
             self.flash = None
             self.flash_until = None
@@ -243,7 +265,7 @@ class Manager(object):
             if not self.flash_until:
                 self.flash_until = (
                     datetime.datetime.utcnow()
-                    + datetime.timedelta(seconds=flash['interval'])
+                    + datetime.timedelta(seconds=flash['timeout'])
                 )
             return flash
         elif self.messages:
@@ -306,7 +328,7 @@ class Manager(object):
             app.run(
                 host=self.ip,
                 port=int(self.port),
-                use_debugger=True,
+                debug=True,
                 use_reloader=False
             )
         process = multiprocessing.Process(
@@ -320,11 +342,70 @@ class Manager(object):
         return local, process
 
     @web_command
-    def add_message(self, *args):
-        message = json.loads(args[0])
-        message['id'] = uuid.uuid4().hex
+    def get_message_by_id(self, id_):
+        idx = self.get_message_index_by_id(self.message_id)
+        if idx is None:
+            raise HttpResponseNotFound('Message %s does not exist' % id_)
+        return self.messages[idx]
+
+    @web_command
+    def delete_message_by_id(self, id_):
+        idx = self.get_message_index_by_id(self.message_id)
+        if idx is None:
+            raise HttpResponseNotFound('Message %s does not exist' % id_)
+        self.delete_message(id_)
+        return 'OK'
+
+    @web_command
+    def update_message_by_id(self, id_, message_payload):
+        message = json.loads(message_payload)
+        idx = self.get_message_index_by_id(self.message_id)
+        if idx is None:
+            raise HttpResponseNotFound('Message %s does not exist' % id_)
+        self.original_message = self.messages[idx]
+        self.messages[idx] = message
+        self.messages[idx]['id'] = self.original_message['id']
+        return self.messages[idx]
+
+    @web_command
+    def patch_message_by_id(self, id_, message_payload):
+        message = json.loads(message_payload)
+        idx = self.get_message_index_by_id(self.message_id)
+        if idx is None:
+            raise HttpResponseNotFound('Message %s does not exist' % id_)
+        self.messages[idx].update(message)
+        return self.messages[idx]
+
+    @web_command
+    def add_message(self, message_payload):
+        message = json.loads(message_payload)
+        if not 'id' in message:
+            message['id'] = uuid.uuid4().hex
+        if 'expires' in message:
+            if isinstance(message['expires'], int):
+                message['expires'] = (
+                    datetime.datetime.utcnow()
+                    + datetime.timedelta(seconds=message['expires'])
+                )
+            elif isinstance(message['expires'], basestring):
+                message['expires'] = datetime.datetime.strptime(
+                    message['expires'],
+                    '%Y-%m-%dT%H:%M:%SZ'
+                )
+            else:
+                raise ValueError('Invalid expiration')
         self.messages.append(message)
         return message['id']
+
+    @web_command
+    def set_flash(self, message_payload):
+        self.flash = json.loads(message_payload)
+        return self.get_flash_message()  # Post-processing
+
+    @web_command
+    def clear_flash(self):
+        self.flash = None
+        return 'OK'
 
     @web_command
     def get_messages(self, *args):

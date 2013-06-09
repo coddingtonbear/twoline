@@ -1,6 +1,6 @@
 import logging
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 
 
 logger = logging.getLogger(__name__)
@@ -27,16 +27,21 @@ def send_data(msg, data=None):
         msg, data
     ))
 
+
 def send_and_receive(msg, data=None):
     send_data(msg, data)
     while not pipe().poll():
         pass
-    _, args = pipe().recv()
+    t, args = pipe().recv()
+    if t == 'error':
+        logger.error('Received error response %s', args)
+        raise args[0]
     logger.info('Received response %s', args)
     return args
 
+
 @app.route('/message/', methods=['GET', 'POST'])
-def message():
+def message_list():
     if request.method == 'POST':
         response = send_and_receive(
             'add_message', request.data
@@ -51,3 +56,67 @@ def message():
         return jsonify(
             objects=response
         )
+
+
+@app.route('/flash/', methods=['PUT', 'DELETE'])
+def flash():
+    try:
+        if request.method == 'PUT':
+            response = send_and_receive(
+                'set_flash', request.data
+            )
+            return jsonify(
+                **response[0]
+            )
+        elif request.method == 'DELETE':
+            response = send_and_receive(
+                'clear_flash'
+            )
+            return jsonify(
+                status=response[0]
+            )
+    except HttpResponseNotFound:
+        abort(404)
+
+
+@app.route('/message/<message_id>/', methods=['GET', 'PUT', 'DELETE', 'PATCH'])
+def message(message_id):
+    try:
+        if request.method == 'GET':
+            response = send_and_receive(
+                'get_message_by_id', message_id
+            )
+            return jsonify(
+                **response[0]
+            )
+        elif request.method == 'DELETE':
+            response = send_and_receive(
+                'delete_message_by_id', message_id
+            )
+            return jsonify(
+                status=response[0]
+            )
+        elif request.method == 'PUT':
+            response = send_and_receive(
+                'update_message_by_id', [message_id, request.data, ]
+            )
+            return jsonify(
+                **response[0]
+            )
+        elif request.method == 'PATCH':
+            response = send_and_receive(
+                'patch_message_by_id', [message_id, request.data, ]
+            )
+            return jsonify(
+                **response[0]
+            )
+    except HttpResponseNotFound:
+        abort(404)
+
+
+class HttpResponse(Exception):
+    pass
+
+
+class HttpResponseNotFound(HttpResponse):
+    pass

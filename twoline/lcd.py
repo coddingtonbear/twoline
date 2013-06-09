@@ -81,6 +81,7 @@ class LcdManager(object):
 
     @command
     def set_message(self, message):
+        self.clear()
         self.message = message
         self.send(message.encode('utf-8'))
 
