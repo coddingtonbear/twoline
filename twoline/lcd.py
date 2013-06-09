@@ -30,13 +30,22 @@ def command(fn):
 
 
 class LcdManager(object):
-    def __init__(self, device_path, pipe):
+    def __init__(self, device_path, pipe, size=None):
         self.device = open(device_path, 'wb')
         self.pipe = pipe
+        if not size:
+            size = [16, 2]
+        self.size = size
 
         self.message = ''
         self.color = 0, 0, 0
+        self.blink = []
+        self.blink_idx = 0
         self.backlight = False
+
+        self.sleep = 0.1
+        self.blink_counter = 0
+        self.blink_interval = int((1.0 / self.sleep) / 4.0)
 
     def run(self):
         while True:
@@ -53,7 +62,20 @@ class LcdManager(object):
                     self.send_manager_data(
                         'error', 'Command %s does not exist' % cmd
                     )
-            time.sleep(0.1)
+            if self.blink_counter >= self.blink_interval:
+                self.blink_counter = 0
+                self.handle_blink()
+            else:
+                self.blink_counter += 1
+            time.sleep(self.sleep)
+
+    def handle_blink(self):
+        if not self.blink:
+            return
+        self.blink_idx += 1
+        if len(self.blink) <= self.blink_idx:
+            self.blink_idx = 0
+        self.set_backlight_color(self.blink[self.blink_idx])
 
     def send_manager_data(self, msg, data=None):
         if not data:
@@ -71,13 +93,26 @@ class LcdManager(object):
     def message(self, message):
         if 'message' in message and self.message != message['message']:
             self.set_message(message['message'])
-        if message['color'] != self.color:
+        if 'blink' in message and self.blink != message['blink']:
+            logger.info('Blink Differs')
+            self.set_blink(message['blink'])
+        if not 'blink' in message:
+            self.set_blink([])
+        if not self.blink and message['color'] != self.color:
+            logger.info('Color Differs')
             self.set_backlight_color(message['color'])
         if message['backlight'] != self.backlight:
             if message['backlight']:
                 self.on()
             else:
                 self.off()
+
+    @command
+    def set_blink(self, colors):
+        self.blink = colors
+        self.blink_idx = 0
+        if self.blink:
+            self.set_backlight_color(self.blink[self.blink_idx])
 
     @command
     def set_message(self, message):
@@ -102,5 +137,6 @@ class LcdManager(object):
 
     @command
     def set_backlight_color(self, color):
+        logger.info('Setting backlight to %s', color)
         self.color = color
         self.send('\xfe\xd0%s%s%s' % tuple([chr(c) for c in color]))
