@@ -72,7 +72,8 @@ class Manager(object):
         self.lcd_pipe, self.lcd_proc = self.run_lcd()
 
         self.no_messages = {
-            'message': 'No Messages'
+            'backlight': False,
+            'message': ''
         }
         self.default_message = {
             'color': (255, 255, 255),
@@ -80,7 +81,7 @@ class Manager(object):
             'interval': 5
         }
         self.default_flash = {
-            'color': (255, 0, 0),
+            'blink': [(255, 0, 0), (0, 0, 0)],
             'backlight': True,
             'timeout': 5
         }
@@ -230,6 +231,7 @@ class Manager(object):
                 # If we just incremented, and are still at the same index
                 # there is only one message in the list, and we're
                 # in the process of deleting it.
+                self.until = None
                 self.message_id = None
         idx = self.get_message_index_by_id(message_id)
         message = self.messages[idx]
@@ -357,15 +359,17 @@ class Manager(object):
         return 'OK'
 
     @web_command
-    def update_message_by_id(self, id_, message_payload):
+    def put_message_by_id(self, id_, message_payload):
         message = json.loads(message_payload)
         idx = self.get_message_index_by_id(self.message_id)
         if idx is None:
-            raise HttpResponseNotFound('Message %s does not exist' % id_)
-        self.original_message = self.messages[idx]
-        self.messages[idx] = message
-        self.messages[idx]['id'] = self.original_message['id']
-        return self.messages[idx]
+            message['id'] = id_
+            self.messages.append(message)
+            return message
+        else:
+            self.messages[idx] = message
+            self.messages[idx]['id'] = id_
+            return self.messages[idx]
 
     @web_command
     def patch_message_by_id(self, id_, message_payload):
@@ -377,7 +381,7 @@ class Manager(object):
         return self.messages[idx]
 
     @web_command
-    def add_message(self, message_payload):
+    def post_message(self, message_payload):
         message = json.loads(message_payload)
         if not 'id' in message:
             message['id'] = uuid.uuid4().hex
@@ -398,14 +402,21 @@ class Manager(object):
         return message['id']
 
     @web_command
-    def set_flash(self, message_payload):
+    def put_flash(self, message_payload):
         self.flash = json.loads(message_payload)
         return self.get_flash_message()  # Post-processing
 
     @web_command
-    def clear_flash(self):
+    def delete_flash(self):
         self.flash = None
+        self.flash_until = None
         return 'OK'
+
+    @web_command
+    def get_flash(self):
+        if not self.flash:
+            raise HttpResponseNotFound('Flash message not set')
+        return self.flash
 
     @web_command
     def get_messages(self, *args):

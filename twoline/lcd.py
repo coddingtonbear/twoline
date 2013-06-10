@@ -4,7 +4,7 @@ import time
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+
 
 COMMANDS = {}
 
@@ -38,14 +38,17 @@ class LcdManager(object):
         self.size = size
 
         self.message = ''
+        self.message_lines = []
         self.color = 0, 0, 0
         self.blink = []
         self.blink_idx = 0
-        self.backlight = False
+        self.backlight = True
 
         self.sleep = 0.1
         self.blink_counter = 0
         self.blink_interval = int((1.0 / self.sleep) / 4.0)
+
+        self.clear()
 
     def run(self):
         while True:
@@ -94,18 +97,20 @@ class LcdManager(object):
         if 'message' in message and self.message != message['message']:
             self.set_message(message['message'])
         if 'blink' in message and self.blink != message['blink']:
-            logger.info('Blink Differs')
             self.set_blink(message['blink'])
         if not 'blink' in message:
             self.set_blink([])
         if not self.blink and message['color'] != self.color:
-            logger.info('Color Differs')
             self.set_backlight_color(message['color'])
         if message['backlight'] != self.backlight:
             if message['backlight']:
                 self.on()
             else:
                 self.off()
+
+    def get_message_lines(self, message):
+        lines = message.split('\r')
+        return lines
 
     @command
     def set_blink(self, colors):
@@ -116,23 +121,28 @@ class LcdManager(object):
 
     @command
     def set_message(self, message):
+        logger.info('Setting message \'%s\'', message)
         self.clear()
-        self.message = message
+        self.message = message.replace('\n', '')
+        self.message_lines = self.get_message_lines(self.message)
         self.send(message.encode('utf-8'))
 
     @command
     def off(self, *args):
+        logger.info('Backlight Off')
         self.backlight = False
         self.send('\xfe\x46')
 
     @command
     def on(self, *args):
+        logger.info('Backlight On')
         self.backlight = True
         self.send('\xfe\x42')
 
     @command
     def clear(self, *args):
         self.message = ''
+        self.message_lines = []
         self.send('\xfe\x58')
 
     @command

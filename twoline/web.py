@@ -44,7 +44,7 @@ def send_and_receive(msg, data=None):
 def message_list():
     if request.method == 'POST':
         response = send_and_receive(
-            'add_message', request.data
+            'post_message', request.data
         )
         return jsonify(
             id=response[0]
@@ -58,22 +58,29 @@ def message_list():
         )
 
 
-@app.route('/flash/', methods=['PUT', 'DELETE'])
+@app.route('/flash/', methods=['GET', 'PUT', 'DELETE'])
 def flash():
     try:
         if request.method == 'PUT':
             response = send_and_receive(
-                'set_flash', request.data
+                'put_flash', request.data
             )
             return jsonify(
                 **response[0]
             )
         elif request.method == 'DELETE':
             response = send_and_receive(
-                'clear_flash'
+                'delete_flash'
             )
             return jsonify(
                 status=response[0]
+            )
+        elif request.method == 'GET':
+            response = send_and_receive(
+                'get_flash'
+            )
+            return jsonify(
+                **response[0]
             )
     except HttpResponseNotFound:
         abort(404)
@@ -98,7 +105,7 @@ def message(message_id):
             )
         elif request.method == 'PUT':
             response = send_and_receive(
-                'update_message_by_id', [message_id, request.data, ]
+                'put_message_by_id', [message_id, request.data, ]
             )
             return jsonify(
                 **response[0]
