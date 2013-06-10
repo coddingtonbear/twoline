@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='twoline',
-    version='0.5',
+    version='0.6',
     url='http://bitbucket.org/latestrevision/twoline/',
     description='Manager for two-line LCDs',
     author='Adam Coddington',
