@@ -1,12 +1,15 @@
 import multiprocessing
 
-from setuptools import setup
+from setuptools import setup, find_packages
+
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setup(
     name='twoline',
-    version='0.6',
+    version='0.6.1',
     url='http://bitbucket.org/latestrevision/twoline/',
-    description='Manager for two-line LCDs',
+    description='Manager for simple character LCDs',
     author='Adam Coddington',
     author_email='me@adamcoddington.net',
     classifiers=[
@@ -15,7 +18,8 @@ setup(
         'Programming Language :: Python',
         'Topic :: Utilities',
     ],
-    packages=['twoline', ],
+    install_requires=required,
+    packages=find_packages(),
     entry_points={'console_scripts': [
         'twoline = twoline.cmdline:run_from_cmdline']},
     test_suite='nose.collector',
