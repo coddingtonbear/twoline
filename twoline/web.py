@@ -40,6 +40,42 @@ def send_and_receive(msg, data=None):
     return args
 
 
+@app.route('/contrast/', methods=['GET', 'PUT'])
+def contrast():
+    if request.method == 'GET':
+        response = send_and_receive(
+            'get_contrast'
+        )
+        return jsonify(
+            contrast=response[0]
+        )
+    elif request.method == 'PUT':
+        response = send_and_receive(
+            'set_contrast', request.data
+        )
+        return jsonify(
+            contrast=response[0]
+        )
+
+
+@app.route('/brightness/', methods=['GET', 'PUT'])
+def brightness():
+    if request.method == 'GET':
+        response = send_and_receive(
+            'get_brightness'
+        )
+        return jsonify(
+            brightness=response[0]
+        )
+    elif request.method == 'PUT':
+        response = send_and_receive(
+            'set_brightness', request.data
+        )
+        return jsonify(
+            brightness=response[0]
+        )
+
+
 @app.route('/message/', methods=['GET', 'POST'])
 def message_list():
     if request.method == 'POST':
@@ -47,7 +83,7 @@ def message_list():
             'post_message', request.data
         )
         return jsonify(
-            id=response[0]
+            **response[0]
         )
     elif request.method == 'GET':
         response = send_and_receive(

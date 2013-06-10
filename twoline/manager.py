@@ -1,4 +1,6 @@
+import calendar
 import datetime
+from email.utils import parsedate_tz
 from functools import wraps
 import json
 import logging
@@ -356,6 +358,27 @@ class Manager(object):
         )
         return local, process
 
+    def process_message(self, message):
+        if not 'id' in message:
+            message['id'] = uuid.uuid4().hex
+        if 'expires' in message:
+            raw_date_tuple = parsedate_tz(message['expires'])
+            if isinstance(message['expires'], int):
+                message['expires'] = (
+                    datetime.datetime.utcnow()
+                    + datetime.timedelta(seconds=message['expires'])
+                )
+            elif isinstance(message['expires'], basestring) and raw_date_tuple:
+                raw_date = datetime.datetime.fromtimestamp(
+                    time.mktime(raw_date_tuple[0:-1])
+                )
+                message['expires'] = raw_date - datetime.timedelta(
+                    seconds=raw_date_tuple[-1]
+                )
+            else:
+                raise ValueError('Invalid expiration')
+        return message
+
     @web_command
     def get_message_by_id(self, id_):
         idx = self.get_message_index_by_id(self.message_id)
@@ -377,7 +400,11 @@ class Manager(object):
         idx = self.get_message_index_by_id(self.message_id)
         if idx is None:
             message['id'] = id_
-            self.messages.append(message)
+            self.messages.append(
+                self.process_message(
+                    message
+                )
+            )
             return message
         else:
             self.messages[idx] = message
@@ -394,25 +421,52 @@ class Manager(object):
         return self.messages[idx]
 
     @web_command
+    def get_brightness(self, *args):
+        self.send_lcd_data(
+            'get_brightness'
+        )
+        while not self.lcd_pipe.poll():
+            pass
+        _, args = self.lcd_pipe.recv()
+        return args[0]
+
+    @web_command
+    def set_brightness(self, value):
+        self.send_lcd_data(
+            'set_brightness', int(value)
+        )
+        return value
+
+    @web_command
+    def get_contrast(self, *args):
+        self.send_lcd_data(
+            'get_contrast'
+        )
+        while not self.lcd_pipe.poll():
+            pass
+        _, args = self.lcd_pipe.recv()
+        return args[0]
+
+    @web_command
+    def set_contrast(self, value):
+        self.send_lcd_data(
+            'set_contrast', int(value)
+        )
+        return value
+
+    @web_command
+    def get_messages(self, *args):
+        return self.messages
+
+    @web_command
     def post_message(self, message_payload):
         message = json.loads(message_payload)
-        if not 'id' in message:
-            message['id'] = uuid.uuid4().hex
-        if 'expires' in message:
-            if isinstance(message['expires'], int):
-                message['expires'] = (
-                    datetime.datetime.utcnow()
-                    + datetime.timedelta(seconds=message['expires'])
-                )
-            elif isinstance(message['expires'], basestring):
-                message['expires'] = datetime.datetime.strptime(
-                    message['expires'],
-                    '%Y-%m-%dT%H:%M:%SZ'
-                )
-            else:
-                raise ValueError('Invalid expiration')
-        self.messages.append(message)
-        return message['id']
+        self.messages.append(
+            self.process_message(
+                message
+            )
+        )
+        return message
 
     @web_command
     def put_flash(self, message_payload):
@@ -430,10 +484,6 @@ class Manager(object):
         if not self.flash:
             raise HttpResponseNotFound('Flash message not set')
         return self.flash
-
-    @web_command
-    def get_messages(self, *args):
-        return self.messages
 
     @lcd_command
     @web_command

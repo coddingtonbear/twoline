@@ -42,6 +42,8 @@ class LcdManager(object):
         self.message_lines = []
         self.color = 0, 0, 0
         self.backlight = True
+        self.contrast = 150
+        self.brightness = 255
 
         self.sleep = 0.1
 
@@ -58,6 +60,8 @@ class LcdManager(object):
             (1.0 / self.sleep) * text_cycle_interval
         )
 
+        self.set_contrast(self.contrast)
+        self.set_brightness(self.brightness)
         self.clear()
 
     def run(self):
@@ -121,6 +125,37 @@ class LcdManager(object):
     def send(self, cmd):
         self.device.write(cmd + '\n')
 
+    def get_message_lines(self, message):
+        lines = []
+        original_lines = message.split('\r')
+        for line in original_lines:
+            lines.extend(
+                line[i:i+self.size[0]]
+                for i in range(0, len(line), self.size[0])
+            )
+        logger.debug(lines)
+        return lines
+
+    @command
+    def set_contrast(self, value):
+        logger.info('Setting brightness to %s', value)
+        self.contrast = value
+        self.send('\xfe\x50%s' % chr(value))
+
+    @command
+    def get_contrast(self, *args):
+        self.send_manager_data('response', self.contrast)
+
+    @command
+    def set_brightness(self, value):
+        logger.info('Setting brightness to %s', value)
+        self.contrast = value
+        self.send('\xfe\x99%s' % chr(value))
+
+    @command
+    def get_brightness(self, *args):
+        self.send_manager_data('response', self.brightness)
+
     @command
     def message(self, message):
         if 'message' in message and self.message != message['message']:
@@ -136,17 +171,6 @@ class LcdManager(object):
                 self.on()
             else:
                 self.off()
-
-    def get_message_lines(self, message):
-        lines = []
-        original_lines = message.split('\r')
-        for line in original_lines:
-            lines.extend(
-                line[i:i+self.size[0]]
-                for i in range(0, len(line), self.size[0])
-            )
-        logger.debug(lines)
-        return lines
 
     @command
     def set_blink(self, colors):
