@@ -1,4 +1,3 @@
-import calendar
 import datetime
 from email.utils import parsedate_tz
 from functools import wraps
@@ -8,8 +7,11 @@ import multiprocessing
 import time
 import uuid
 
-from twoline.web import app, HttpResponseNotFound
+from jsonschema import validate, ValidationError
+
+from twoline.web import app, HttpResponseNotFound, HttpResponseBadRequest
 from twoline.lcd import LcdManager
+from twoline.schema import message_schema
 
 
 logger = logging.getLogger(__name__)
@@ -36,8 +38,10 @@ def web_command(fn):
             )
             if response is not None:
                 self.send_web_data('response', response)
-        except Exception as e:
+        except HttpResponseNotFound as e:
             self.send_web_data('error', e)
+        except Exception as e:
+            self.send_web_data('error', HttpResponseBadRequest(str(e)))
 
     WEB_COMMANDS[fn.func_name] = wrapped
     return wrapped
@@ -357,6 +361,7 @@ class Manager(object):
         return local, process
 
     def process_message(self, message):
+        validate(message, message_schema)
         if not 'id' in message:
             message['id'] = uuid.uuid4().hex
         if 'expires' in message:
@@ -374,7 +379,7 @@ class Manager(object):
                     seconds=raw_date_tuple[-1]
                 )
             else:
-                raise ValueError('Invalid expiration')
+                raise ValidationError('Invalid expiration date')
         return message
 
     @web_command
@@ -468,7 +473,11 @@ class Manager(object):
 
     @web_command
     def put_flash(self, message_payload):
-        self.flash = json.loads(message_payload)
+        self.flash = self.process_message(
+            json.loads(
+                message_payload
+            )
+        )
         return self.get_flash_message()  # Post-processing
 
     @web_command

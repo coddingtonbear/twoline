@@ -1,6 +1,6 @@
 import logging
 
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify
 
 
 logger = logging.getLogger(__name__)
@@ -55,56 +55,83 @@ def index():
 
 @app.route('/contrast/', methods=['GET', 'PUT'])
 def contrast():
-    if request.method == 'GET':
-        response = send_and_receive(
-            'get_contrast'
+    try:
+        if request.method == 'GET':
+            response = send_and_receive(
+                'get_contrast'
+            )
+            return jsonify(
+                contrast=response[0]
+            )
+        elif request.method == 'PUT':
+            response = send_and_receive(
+                'set_contrast', request.data
+            )
+            return jsonify(
+                contrast=response[0]
+            )
+    except Exception as e:
+        response = jsonify(
+            error=str(e)
         )
-        return jsonify(
-            contrast=response[0]
-        )
-    elif request.method == 'PUT':
-        response = send_and_receive(
-            'set_contrast', request.data
-        )
-        return jsonify(
-            contrast=response[0]
-        )
+        response.status_code = 500
+        return response
 
 
 @app.route('/brightness/', methods=['GET', 'PUT'])
 def brightness():
-    if request.method == 'GET':
-        response = send_and_receive(
-            'get_brightness'
+    try:
+        if request.method == 'GET':
+            response = send_and_receive(
+                'get_brightness'
+            )
+            return jsonify(
+                brightness=response[0]
+            )
+        elif request.method == 'PUT':
+            response = send_and_receive(
+                'set_brightness', request.data
+            )
+            return jsonify(
+                brightness=response[0]
+            )
+    except Exception as e:
+        response = jsonify(
+            error=str(e)
         )
-        return jsonify(
-            brightness=response[0]
-        )
-    elif request.method == 'PUT':
-        response = send_and_receive(
-            'set_brightness', request.data
-        )
-        return jsonify(
-            brightness=response[0]
-        )
+        response.status_code = 500
+        return response
 
 
 @app.route('/message/', methods=['GET', 'POST'])
 def message_list():
-    if request.method == 'POST':
-        response = send_and_receive(
-            'post_message', request.data
+    try:
+        if request.method == 'POST':
+            response = send_and_receive(
+                'post_message', request.data
+            )
+            return jsonify(
+                **response[0]
+            )
+        elif request.method == 'GET':
+            response = send_and_receive(
+                'get_messages', request.data
+            )
+            return jsonify(
+                objects=response
+            )
+    except HttpResponseBadRequest as e:
+        response = jsonify(
+            error=str(e)
         )
-        return jsonify(
-            **response[0]
+        response.status_code = 400
+        return response
+    except Exception as e:
+        response = jsonify(
+            error=str(e)
         )
-    elif request.method == 'GET':
-        response = send_and_receive(
-            'get_messages', request.data
-        )
-        return jsonify(
-            objects=response
-        )
+        response.status_code = 500
+        return response
 
 
 @app.route('/flash/', methods=['GET', 'PUT', 'DELETE'])
@@ -132,7 +159,25 @@ def flash():
                 **response[0]
             )
     except HttpResponseNotFound:
-        abort(404)
+        response = jsonify(
+            error='No flash message is currently set'
+        )
+        response.status_code = 404
+        return response
+    except HttpResponseBadRequest as e:
+        response = jsonify(
+            error=str(e)
+        )
+        response.status_code = 400
+        return response
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        response = jsonify(
+            error=str(e)
+        )
+        response.status_code = 500
+        return response
 
 
 @app.route('/message/<message_id>/', methods=['GET', 'PUT', 'DELETE', 'PATCH'])
@@ -167,7 +212,23 @@ def message(message_id):
                 **response[0]
             )
     except HttpResponseNotFound:
-        abort(404)
+        response = jsonify(
+            error='Message ID %s does not exist' % message_id
+        )
+        response.status_code = 404
+        return response
+    except HttpResponseBadRequest as e:
+        response = jsonify(
+            error=str(e)
+        )
+        response.status_code = 400
+        return response
+    except Exception as e:
+        response = jsonify(
+            error=str(e)
+        )
+        response.status_code = 500
+        return response
 
 
 class HttpResponse(Exception):
@@ -175,4 +236,8 @@ class HttpResponse(Exception):
 
 
 class HttpResponseNotFound(HttpResponse):
+    pass
+
+
+class HttpResponseBadRequest(HttpResponse):
     pass
