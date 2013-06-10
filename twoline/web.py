@@ -40,6 +40,19 @@ def send_and_receive(msg, data=None):
     return args
 
 
+@app.route('/', methods=['GET'])
+def index():
+    routes = {}
+    for rule in app.url_map.iter_rules():
+        routes[rule.endpoint] = {
+            'url': rule.rule,
+            'methods': list(rule.methods),
+        }
+    return jsonify(
+        **routes
+    )
+
+
 @app.route('/contrast/', methods=['GET', 'PUT'])
 def contrast():
     if request.method == 'GET':

@@ -345,8 +345,6 @@ class Manager(object):
             app.run(
                 host=self.ip,
                 port=int(self.port),
-                debug=True,
-                use_reloader=False
             )
         process = multiprocessing.Process(
             target=_run_webserver
