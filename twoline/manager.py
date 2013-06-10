@@ -83,7 +83,7 @@ class Manager(object):
         self.default_flash = {
             'blink': [(255, 0, 0), (0, 0, 0)],
             'backlight': True,
-            'timeout': 5
+            'timeout': 10
         }
         self.flash = None
         self.flash_until = None

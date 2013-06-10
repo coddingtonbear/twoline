@@ -40,13 +40,18 @@ class LcdManager(object):
         self.message = ''
         self.message_lines = []
         self.color = 0, 0, 0
-        self.blink = []
-        self.blink_idx = 0
         self.backlight = True
 
         self.sleep = 0.1
+
+        self.blink = []
+        self.blink_idx = 0
         self.blink_counter = 0
         self.blink_interval = int((1.0 / self.sleep) / 4.0)
+
+        self.text_idx = 0
+        self.text_cycle_counter = 0
+        self.text_cycle_interval = int((1.0 / self.sleep) / 0.25)
 
         self.clear()
 
@@ -70,7 +75,26 @@ class LcdManager(object):
                 self.handle_blink()
             else:
                 self.blink_counter += 1
+            if self.text_cycle_counter >= self.text_cycle_interval:
+                self.text_cycle_counter = 0
+                self.handle_text_cycle()
+            else:
+                self.text_cycle_counter += 1
             time.sleep(self.sleep)
+
+    def handle_text_cycle(self):
+        if len(self.message_lines) <= self.text_idx:
+            self.text_idx = 0
+        self.send('\xfe\x58')
+        cleaned_lines = [
+            line.ljust(self.size[0])
+            for line in self.message_lines[
+                self.text_idx:self.text_idx+self.size[1]
+            ]
+        ]
+        display_text = ''.join(cleaned_lines)
+        self.send(display_text.encode('ascii', 'replace'))
+        self.text_idx += 2
 
     def handle_blink(self):
         if not self.blink:
@@ -109,7 +133,14 @@ class LcdManager(object):
                 self.off()
 
     def get_message_lines(self, message):
-        lines = message.split('\r')
+        lines = []
+        original_lines = message.split('\r')
+        for line in original_lines:
+            lines.extend(
+                line[i:i+self.size[0]]
+                for i in range(0, len(line), self.size[0])
+            )
+        logger.debug(lines)
         return lines
 
     @command
@@ -123,9 +154,10 @@ class LcdManager(object):
     def set_message(self, message):
         logger.info('Setting message \'%s\'', message)
         self.clear()
+        self.text_idx = 0
         self.message = message.replace('\n', '')
         self.message_lines = self.get_message_lines(self.message)
-        self.send(message.encode('utf-8'))
+        self.handle_text_cycle()
 
     @command
     def off(self, *args):
@@ -142,6 +174,7 @@ class LcdManager(object):
     @command
     def clear(self, *args):
         self.message = ''
+        self.text_idx = 0
         self.message_lines = []
         self.send('\xfe\x58')
 
