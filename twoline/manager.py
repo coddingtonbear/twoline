@@ -63,10 +63,16 @@ def lcd_command(fn):
 
 
 class Manager(object):
-    def __init__(self, device, ip='0.0.0.0', port=9101, *args, **kwargs):
+    def __init__(self, device, ip='0.0.0.0', port=9101,
+            size_x=16, size_y=2, blink_interval=0.25, text_cycle_interval=2,
+            *args, **kwargs):
         self.ip = ip
         self.port = port
         self.device = device
+        self.size_x = int(size_x)
+        self.size_y = int(size_y)
+        self.blink_interval = float(blink_interval)
+        self.text_cycle_interval = float(text_cycle_interval)
 
         self.web_pipe, self.web_proc = self.run_webserver()
         self.lcd_pipe, self.lcd_proc = self.run_lcd()
@@ -309,7 +315,14 @@ class Manager(object):
         local, lcd_pipe = multiprocessing.Pipe()
 
         def _run_lcd():
-            mgr = LcdManager(self.device, lcd_pipe)
+            mgr = LcdManager(
+                self.device,
+                lcd_pipe,
+                size_x=self.size_x,
+                size_y=self.size_y,
+                blink_interval=self.blink_interval,
+                text_cycle_interval=self.text_cycle_interval
+            )
             mgr.run()
 
         process = multiprocessing.Process(

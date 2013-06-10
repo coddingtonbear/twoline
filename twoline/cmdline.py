@@ -15,6 +15,18 @@ def run_from_cmdline():
     parser.add_option(
         '--loglevel', '-l', dest='loglevel', default='INFO'
     )
+    parser.add_option(
+        '--size-x', '-x', dest='size_x', default='16',
+    )
+    parser.add_option(
+        '--size-y', '-y', dest='size_y', default='2',
+    )
+    parser.add_option(
+        '--text-cycle-interval', dest='text_cycle_interval', default='2'
+    )
+    parser.add_option(
+        '--blink-interval', dest='blink_interval', default='0.25'
+    )
 
     options, args = parser.parse_args()
 

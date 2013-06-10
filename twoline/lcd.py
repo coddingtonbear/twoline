@@ -30,7 +30,8 @@ def command(fn):
 
 
 class LcdManager(object):
-    def __init__(self, device_path, pipe, size=None):
+    def __init__(self, device_path, pipe, size=None,
+            blink_interval=0.25, text_cycle_interval=2, size_x=16, size_y=2):
         self.device = open(device_path, 'wb')
         self.pipe = pipe
         if not size:
@@ -47,11 +48,15 @@ class LcdManager(object):
         self.blink = []
         self.blink_idx = 0
         self.blink_counter = 0
-        self.blink_interval = int((1.0 / self.sleep) / 4.0)
+        self.blink_interval = int(
+            (1.0 / self.sleep) * blink_interval
+        )
 
         self.text_idx = 0
         self.text_cycle_counter = 0
-        self.text_cycle_interval = int((1.0 / self.sleep) / 0.25)
+        self.text_cycle_interval = int(
+            (1.0 / self.sleep) * text_cycle_interval
+        )
 
         self.clear()
 
