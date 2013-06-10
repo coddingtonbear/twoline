@@ -44,6 +44,8 @@ def send_and_receive(msg, data=None):
 def index():
     routes = {}
     for rule in app.url_map.iter_rules():
+        if rule.endpoint in ('index', 'static'):
+            continue
         routes[rule.endpoint] = {
             'url': rule.rule,
             'methods': list(rule.methods),

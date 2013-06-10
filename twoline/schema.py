@@ -56,3 +56,10 @@ message_schema = {
     'additionalProperties': False,
     'required': ['message']
 }
+
+integer_schema = {
+    'title': 'Brightness/Contrast Schema',
+    'type': 'integer',
+    'minimum': 1,
+    'maximum': 255
+}

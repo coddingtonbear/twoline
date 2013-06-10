@@ -11,7 +11,7 @@ from jsonschema import validate, ValidationError
 
 from twoline.web import app, HttpResponseNotFound, HttpResponseBadRequest
 from twoline.lcd import LcdManager
-from twoline.schema import message_schema
+from twoline.schema import message_schema, integer_schema
 
 
 logger = logging.getLogger(__name__)
@@ -435,6 +435,11 @@ class Manager(object):
 
     @web_command
     def set_brightness(self, value):
+        try:
+            value = int(value)
+        except ValueError as e:
+            raise ValidationError('Brightness requires an integer value')
+        validate(value, integer_schema)
         self.send_lcd_data(
             'set_brightness', int(value)
         )
@@ -452,6 +457,11 @@ class Manager(object):
 
     @web_command
     def set_contrast(self, value):
+        try:
+            value = int(value)
+        except ValueError as e:
+            raise ValidationError('Contrast requires an integer value')
+        validate(value, integer_schema)
         self.send_lcd_data(
             'set_contrast', int(value)
         )
