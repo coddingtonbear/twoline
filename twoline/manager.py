@@ -9,9 +9,12 @@ import uuid
 
 from jsonschema import validate, ValidationError
 
-from twoline.web import app, HttpResponseNotFound, HttpResponseBadRequest
+from twoline.exceptions import (
+    InvalidRequest, NotFound, BadRequest, UnexpectedError
+)
 from twoline.lcd import LcdManager
 from twoline.schema import message_schema, integer_schema
+from twoline.web import app
 
 
 logger = logging.getLogger(__name__)
@@ -38,10 +41,14 @@ def web_command(fn):
             )
             if response is not None:
                 self.send_web_data('response', response)
-        except HttpResponseNotFound as e:
+        except NotFound as e:
             self.send_web_data('error', e)
+        except ValidationError as e:
+            self.send_web_data('error', InvalidRequest(str(e)))
+        except ValueError as e:
+            self.send_web_data('error', BadRequest(str(e)))
         except Exception as e:
-            self.send_web_data('error', HttpResponseBadRequest(str(e)))
+            self.send_web_data('error', UnexpectedError(str(e)))
 
     WEB_COMMANDS[fn.func_name] = wrapped
     return wrapped
@@ -386,14 +393,14 @@ class Manager(object):
     def get_message_by_id(self, id_):
         idx = self.get_message_index_by_id(self.message_id)
         if idx is None:
-            raise HttpResponseNotFound('Message %s does not exist' % id_)
+            raise NotFound('Message %s does not exist' % id_)
         return self.messages[idx]
 
     @web_command
     def delete_message_by_id(self, id_):
         idx = self.get_message_index_by_id(self.message_id)
         if idx is None:
-            raise HttpResponseNotFound('Message %s does not exist' % id_)
+            raise NotFound('Message %s does not exist' % id_)
         self.delete_message(id_)
         return 'OK'
 
@@ -419,7 +426,7 @@ class Manager(object):
         message = json.loads(message_payload)
         idx = self.get_message_index_by_id(self.message_id)
         if idx is None:
-            raise HttpResponseNotFound('Message %s does not exist' % id_)
+            raise NotFound('Message %s does not exist' % id_)
         self.messages[idx].update(message)
         return self.messages[idx]
 
@@ -499,7 +506,7 @@ class Manager(object):
     @web_command
     def get_flash(self):
         if not self.flash:
-            raise HttpResponseNotFound('Flash message not set')
+            raise NotFound('Flash message not set')
         return self.flash
 
     @lcd_command
