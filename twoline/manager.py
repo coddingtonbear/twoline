@@ -371,8 +371,9 @@ class Manager(object):
         return local, process
 
     def process_message(self, message, ignore_id=False):
-        if isinstance(message['expires'], datetime.datetime):
-            message['expires'] = message['expires'].isoformat()
+        if 'expires' in message:
+            if isinstance(message['expires'], datetime.datetime):
+                message['expires'] = message['expires'].isoformat()
         validate(message, message_schema)
         if not 'id' in message or ignore_id:
             message['id'] = uuid.uuid4().hex
