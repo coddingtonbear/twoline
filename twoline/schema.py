@@ -8,7 +8,7 @@ message_schema = {
         'expires': {
             'oneOf': [
                 {
-                    # RFC822 String
+                    # String datetime; parsed by dateutil
                     'type': 'string',
                 },
                 {
