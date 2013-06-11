@@ -1,5 +1,4 @@
 import datetime
-from email.utils import parsedate_tz
 from functools import wraps
 import json
 import logging
@@ -7,7 +6,10 @@ import multiprocessing
 import time
 import uuid
 
+from dateutil.parser import parse
+from dateutil.tz import tzlocal
 from jsonschema import validate, ValidationError
+import pytz
 
 from twoline.exceptions import (
     InvalidRequest, NotFound, BadRequest, UnexpectedError
@@ -257,7 +259,7 @@ class Manager(object):
         self.messages.remove(message)
 
     def handle_expirations(self):
-        utcnow = datetime.datetime.utcnow()
+        utcnow = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
         for message in self.messages:
             if 'expires' in message and message['expires'] < utcnow:
                 logger.info(
@@ -280,21 +282,20 @@ class Manager(object):
                 self.increment_index()
 
     def get_current_message(self):
+        utcnow = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
         self.handle_expirations()
         if self.flash:
             flash = self.get_flash_message()
             if not self.flash_until:
                 self.flash_until = (
-                    datetime.datetime.utcnow()
-                    + datetime.timedelta(seconds=flash['timeout'])
+                    utcnow + datetime.timedelta(seconds=flash['timeout'])
                 )
             return flash
         elif self.messages:
             message = self.get_message()
             if not self.until:
                 self.until = (
-                    datetime.datetime.utcnow()
-                    + datetime.timedelta(seconds=message['interval'])
+                    utcnow + datetime.timedelta(seconds=message['interval'])
                 )
             return message
         else:
@@ -367,26 +368,38 @@ class Manager(object):
         )
         return local, process
 
-    def process_message(self, message):
+    def process_message(self, message, ignore_id=False):
+        if isinstance(message['expires'], datetime.datetime):
+            message['expires'] = message['expires'].isoformat()
         validate(message, message_schema)
-        if not 'id' in message:
+        if not 'id' in message or ignore_id:
             message['id'] = uuid.uuid4().hex
         if 'expires' in message:
-            raw_date_tuple = parsedate_tz(message['expires'])
             if isinstance(message['expires'], int):
                 message['expires'] = (
-                    datetime.datetime.utcnow()
+                    datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
                     + datetime.timedelta(seconds=message['expires'])
                 )
-            elif isinstance(message['expires'], basestring) and raw_date_tuple:
-                raw_date = datetime.datetime.fromtimestamp(
-                    time.mktime(raw_date_tuple[0:-1])
-                )
-                message['expires'] = raw_date - datetime.timedelta(
-                    seconds=raw_date_tuple[-1]
-                )
+            elif isinstance(message['expires'], basestring):
+                try:
+                    expires = parse(message['expires'])
+                    if not expires.tzinfo:
+                        expires = expires.replace(tzinfo=tzlocal())
+                    message['expires'] = expires
+                except ValueError:
+                    raise ValidationError(
+                        (
+                            '\'%s\' is neither a valid ISO datetime or an '
+                            'integer count of seconds'
+                        ) % message['expires']
+                    )
             else:
-                raise ValidationError('Invalid expiration date')
+                raise ValidationError(
+                    (
+                        '\'%s\' is neither a valid ISO datetime or an integer '
+                        'count of seconds'
+                    ) % message['expires']
+                )
         return message
 
     @web_command
@@ -410,14 +423,10 @@ class Manager(object):
         idx = self.get_message_index_by_id(self.message_id)
         if idx is None:
             message['id'] = id_
-            self.messages.append(
-                self.process_message(
-                    message
-                )
-            )
+            self.messages.append(self.process_message(message))
             return message
         else:
-            self.messages[idx] = message
+            self.messages[idx] = self.process_message(message)
             self.messages[idx]['id'] = id_
             return self.messages[idx]
 
@@ -427,7 +436,9 @@ class Manager(object):
         idx = self.get_message_index_by_id(self.message_id)
         if idx is None:
             raise NotFound('Message %s does not exist' % id_)
-        self.messages[idx].update(message)
+        original_message = self.messages[idx]
+        original_message.update(message)
+        self.messages[idx] = self.process_message(original_message)
         return self.messages[idx]
 
     @web_command
@@ -483,7 +494,8 @@ class Manager(object):
         message = json.loads(message_payload)
         self.messages.append(
             self.process_message(
-                message
+                message,
+                ignore_id=True
             )
         )
         return message

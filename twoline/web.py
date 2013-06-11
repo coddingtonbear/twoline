@@ -1,10 +1,10 @@
+import datetime
+import json
 import logging
 
-from flask import Flask, request, jsonify
+from flask import Flask, make_response, request
 
-from twoline.exceptions import (
-    InvalidRequest, NotFound, BadRequest, UnexpectedError
-)
+from twoline.exceptions import InvalidRequest, NotFound, BadRequest
 
 
 logger = logging.getLogger(__name__)
@@ -45,8 +45,20 @@ def send_and_receive(msg, data=None):
 
 
 def json_response(status_code=200, **kwargs):
-    response = jsonify(**kwargs)
+    def handle_data(obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        raise TypeError
+    response = make_response(
+        json.dumps(
+            kwargs,
+            default=handle_data,
+            indent=2
+        ),
+        status_code
+    )
     response.status_code = status_code
+    response.headers['Content-Type'] = 'application/json'
     return response
 
 
@@ -113,14 +125,14 @@ def brightness():
         response = send_and_receive(
             'get_brightness'
         )
-        return jsonify(
+        return json_response(
             brightness=response[0]
         )
     elif request.method == 'PUT':
         response = send_and_receive(
             'set_brightness', request.data
         )
-        return jsonify(
+        return json_response(
             brightness=response[0]
         )
 
@@ -131,7 +143,7 @@ def message_list():
         response = send_and_receive(
             'post_message', request.data
         )
-        return jsonify(
+        return json_response(
             status_code=201,
             **response[0]
         )
@@ -139,7 +151,7 @@ def message_list():
         response = send_and_receive(
             'get_messages', request.data
         )
-        return jsonify(
+        return json_response(
             objects=response
         )
 
@@ -150,7 +162,7 @@ def flash():
         response = send_and_receive(
             'put_flash', request.data
         )
-        return jsonify(
+        return json_response(
             status_code=201,
             **response[0]
         )
@@ -158,14 +170,14 @@ def flash():
         response = send_and_receive(
             'delete_flash'
         )
-        return jsonify(
+        return json_response(
             status=response[0]
         )
     elif request.method == 'GET':
         response = send_and_receive(
             'get_flash'
         )
-        return jsonify(
+        return json_response(
             **response[0]
         )
 
@@ -176,21 +188,21 @@ def message(message_id):
         response = send_and_receive(
             'get_message_by_id', message_id
         )
-        return jsonify(
+        return json_response(
             **response[0]
         )
     elif request.method == 'DELETE':
         response = send_and_receive(
             'delete_message_by_id', message_id
         )
-        return jsonify(
+        return json_response(
             status=response[0]
         )
     elif request.method == 'PUT':
         response = send_and_receive(
             'put_message_by_id', [message_id, request.data, ]
         )
-        return jsonify(
+        return json_response(
             status_code=201,
             **response[0]
         )
@@ -198,6 +210,6 @@ def message(message_id):
         response = send_and_receive(
             'patch_message_by_id', [message_id, request.data, ]
         )
-        return jsonify(
+        return json_response(
             **response[0]
         )
