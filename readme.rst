@@ -56,7 +56,7 @@ Message Object
 .. code:: python
 
     {
-        'message': 'Adam is not yet 30',
+        'message': 'Until this message disappears, Adam is not yet 30',
         'id': 'An ID',  # Optional; will be set automatically if unspecified
         'color': [255, 255, 255], # Optional; set the color
         'blink': [
