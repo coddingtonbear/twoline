@@ -152,7 +152,7 @@ def message_list():
             'get_messages', request.data
         )
         return json_response(
-            objects=response
+            messages=response
         )
 
 
