@@ -70,7 +70,7 @@ Message Object
                                        # quite liberal, but your mileage may
                                        # vary.
         'interval': 5, # Optional; Only for regular messages;
-                       #Number of seconds to display this message before
+                       # Number of seconds to display this message before
                        # switching to the next
         'timeout': 300,  # Optional; Only for flash messages;
                          # Number of seconds until message disappears
