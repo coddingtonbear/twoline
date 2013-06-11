@@ -145,7 +145,7 @@ class Manager(object):
                 logger.exception(e)
 
     def _run(self):
-        logger.info("Waiting for data")
+        logger.debug("Waiting for data")
         while True:
             if self.web_pipe.poll():
                 cmd, args = self.web_pipe.recv()
@@ -267,10 +267,6 @@ class Manager(object):
                 logger.info(
                     'Message %s has expired.',
                     message['id']
-                )
-                logger.debug(
-                    'Message contents: %s',
-                    message
                 )
                 self.delete_message(message['id'])
         logger.debug('Flash Until: %s', self.flash_until)

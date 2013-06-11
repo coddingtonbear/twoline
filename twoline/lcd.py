@@ -145,7 +145,7 @@ class LcdManager(object):
 
     @command
     def set_contrast(self, value):
-        logger.info('Setting contrast to %s', value)
+        logger.debug('Setting contrast to %s', value)
         self.contrast = value
         self.send('\xfe\x50%s' % chr(value))
 
@@ -155,7 +155,7 @@ class LcdManager(object):
 
     @command
     def set_brightness(self, value):
-        logger.info('Setting brightness to %s', value)
+        logger.debug('Setting brightness to %s', value)
         self.contrast = value
         self.send('\xfe\x99%s' % chr(value))
 
@@ -188,7 +188,7 @@ class LcdManager(object):
 
     @command
     def set_message(self, message):
-        logger.info('Setting message \'%s\'', message)
+        logger.debug('Setting message \'%s\'', message)
         self.clear()
         self.text_idx = 0
         self.message = message.replace('\n', '')
@@ -197,13 +197,13 @@ class LcdManager(object):
 
     @command
     def off(self, *args):
-        logger.info('Backlight Off')
+        logger.debug('Setting backlight to off')
         self.backlight = False
         self.send('\xfe\x46')
 
     @command
     def on(self, *args):
-        logger.info('Backlight On')
+        logger.debug('Setting backlight to on')
         self.backlight = True
         self.send('\xfe\x42')
 
@@ -216,6 +216,6 @@ class LcdManager(object):
 
     @command
     def set_backlight_color(self, color):
-        logger.info('Setting backlight to %s', color)
+        logger.debug('Setting backlight color to %s', color)
         self.color = color
         self.send('\xfe\xd0%s%s%s' % tuple([chr(c) for c in color]))

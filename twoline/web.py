@@ -40,7 +40,7 @@ def send_and_receive(msg, data=None):
     if t == 'error':
         logger.error('Received error response %s', args)
         raise args[0]
-    logger.info('Received response %s', args)
+    logger.debug('Received response %s', args)
     return args
 
 
