@@ -441,16 +441,6 @@ class Manager(object):
         return self.messages[idx]
 
     @web_command
-    def get_brightness(self, *args):
-        self.send_lcd_data(
-            'get_brightness'
-        )
-        while not self.lcd_pipe.poll():
-            pass
-        _, args = self.lcd_pipe.recv()
-        return args[0]
-
-    @web_command
     def set_brightness(self, value):
         try:
             value = int(value)
@@ -461,16 +451,6 @@ class Manager(object):
             'set_brightness', int(value)
         )
         return value
-
-    @web_command
-    def get_contrast(self, *args):
-        self.send_lcd_data(
-            'get_contrast'
-        )
-        while not self.lcd_pipe.poll():
-            pass
-        _, args = self.lcd_pipe.recv()
-        return args[0]
 
     @web_command
     def set_contrast(self, value):

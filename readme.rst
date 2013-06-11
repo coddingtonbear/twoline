@@ -17,25 +17,6 @@ URLS
 
   - *GET*: Display all endpoints and acceptable methods.
 
-``/brightness/``: Brightness
-  Screen brightness.
-
-  - *GET*: Return brightness.
-  - *PUT*: Set brightness.
-
-``/contrast/``: Contrast
-  Screen contrast.
-
-  - *GET*: Return contrast.
-  - *PUT*: Set contrast.
-
-``/flash/``: Flash Messages
-  Short-duration single-time announcements.
-
-  - *GET*: Get the current flash message (if one exists).
-  - *PUT*: Set the flash message to a given message object.
-  - *DELETE*: Delete the current flash message (if one exists).
-
 ``/message/``: Messages
   List or create a message to add to the message rotation.
 
@@ -49,6 +30,24 @@ URLS
   - *PUT*: Replace an existing message object for a given ID.
   - *PATCH*: Update an existing message object for a given ID.
   - *DELETE*: Delete an existing message object for a given ID.
+
+``/flash/``: Flash Messages
+  Short-duration single-time announcements.
+
+  - *GET*: Get the current flash message (if one exists).
+  - *PUT*: Set the flash message to a given message object.
+  - *DELETE*: Delete the current flash message (if one exists).
+
+``/brightness/``: Brightness
+  Screen brightness.
+
+  - *PUT*: Set brightness.
+
+``/contrast/``: Contrast
+  Screen contrast.
+
+  - *PUT*: Set contrast.
+
 
 Message Object
 --------------

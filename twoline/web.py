@@ -101,40 +101,24 @@ def index():
     )
 
 
-@app.route('/contrast/', methods=['GET', 'PUT'])
+@app.route('/contrast/', methods=['PUT'])
 def contrast():
-    if request.method == 'GET':
-        response = send_and_receive(
-            'get_contrast'
-        )
-        return json_response(
-            contrast=response[0]
-        )
-    elif request.method == 'PUT':
-        response = send_and_receive(
-            'set_contrast', request.data
-        )
-        return json_response(
-            contrast=response[0]
-        )
+    response = send_and_receive(
+        'set_contrast', request.data
+    )
+    return json_response(
+        contrast=response[0]
+    )
 
 
-@app.route('/brightness/', methods=['GET', 'PUT'])
+@app.route('/brightness/', methods=['PUT'])
 def brightness():
-    if request.method == 'GET':
-        response = send_and_receive(
-            'get_brightness'
-        )
-        return json_response(
-            brightness=response[0]
-        )
-    elif request.method == 'PUT':
-        response = send_and_receive(
-            'set_brightness', request.data
-        )
-        return json_response(
-            brightness=response[0]
-        )
+    response = send_and_receive(
+        'set_brightness', request.data
+    )
+    return json_response(
+        brightness=response[0]
+    )
 
 
 @app.route('/message/', methods=['GET', 'POST'])
