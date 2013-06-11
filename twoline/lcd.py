@@ -32,7 +32,7 @@ def command(fn):
 class LcdManager(object):
     def __init__(self, device_path, pipe, size=None,
             blink_interval=0.25, text_cycle_interval=2, size_x=16, size_y=2):
-        self.device = open(device_path, 'wb')
+        self.device_path = device_path
         self.pipe = pipe
         if not size:
             size = [16, 2]
@@ -123,7 +123,14 @@ class LcdManager(object):
         ))
 
     def send(self, cmd):
-        self.device.write(cmd + '\n')
+        try:
+            with open(self.device_path, 'wb') as dev:
+                dev.write(cmd + '\n')
+        except IOError:
+            logger.error(
+                'Device unavailable; command \'%s\' dropped.',
+                cmd
+            )
 
     def get_message_lines(self, message):
         lines = []

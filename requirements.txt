@@ -1,2 +1,2 @@
-flask==0.10
+flask>=0.9.999
 jsonschema==2.0.0

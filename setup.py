@@ -13,7 +13,7 @@ with open(
 
 setup(
     name='twoline',
-    version='0.6.2',
+    version='0.6.3',
     url='http://bitbucket.org/latestrevision/twoline/',
     description='Manager for simple character LCDs',
     author='Adam Coddington',
