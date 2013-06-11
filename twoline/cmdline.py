@@ -30,6 +30,9 @@ def run_from_cmdline():
 
     options, args = parser.parse_args()
 
+    if len(args) != 1:
+        parser.error('Device required (usually a path in /dev/)')
+
     logging.basicConfig(
         level=logging.getLevelName(options.loglevel)
     )
