@@ -78,9 +78,11 @@ def lcd_command(fn):
 
 
 class Manager(object):
-    def __init__(self, device, ip='0.0.0.0', port=9101,
-            size_x=16, size_y=2, blink_interval=0.25, text_cycle_interval=2,
-            *args, **kwargs):
+    def __init__(
+        self, device, ip='0.0.0.0', port=9101,
+        size_x=16, size_y=2, blink_interval=0.25, text_cycle_interval=2,
+        *args, **kwargs
+    ):
         self.ip = ip
         self.port = port
         self.device = device
@@ -455,7 +457,7 @@ class Manager(object):
     def set_brightness(self, value):
         try:
             value = int(value)
-        except ValueError as e:
+        except ValueError:
             raise ValidationError('Brightness requires an integer value')
         validate(value, integer_schema)
         self.send_lcd_data(
@@ -477,7 +479,7 @@ class Manager(object):
     def set_contrast(self, value):
         try:
             value = int(value)
-        except ValueError as e:
+        except ValueError:
             raise ValidationError('Contrast requires an integer value')
         validate(value, integer_schema)
         self.send_lcd_data(
