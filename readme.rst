@@ -63,12 +63,12 @@ Message Object
             [255, 0, 0],
             [0, 0, 0]
         ], # Optional; cycle through these colors
-        'expires': '2014-03-02 00:00', # Optional;
+        'expires': '2014-03-02 00:00', # Optional;  The parser -- dateutil --
+                                       # is very liberal, but your mileage may
+                                       # vary.  If no timezone is specified
+                                       # defaults to the local system timezone.
                                        # Can also be an integer number of
                                        # seconds from the current time.
-                                       # The parser (dateutil.parser) is
-                                       # quite liberal, but your mileage may
-                                       # vary.
         'interval': 5, # Optional; Only for regular messages;
                        # Number of seconds to display this message before
                        # switching to the next
