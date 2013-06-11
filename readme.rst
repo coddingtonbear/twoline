@@ -56,15 +56,24 @@ Message Object
 .. code:: python
 
     {
-        'message': 'Any message',
+        'message': 'Adam just turned 30! :-(',
         'id': 'An ID',  # Optional; will be set automatically if unspecified
         'color': [255, 255, 255], # Optional; set the color
         'blink': [
             [255, 0, 0],
             [0, 0, 0]
         ], # Optional; cycle through these colors
-        'expires': 'Sun, 9 June 2013, 22:45 PDT', # Optional; Can also be an integer number of seconds from the current time
-        'timeout': 300,  # Optional; Only for flash messages; Number of seconds until message disappears
+        'expires': '2014-03-02 00:00', # Optional;
+                                       # Can also be an integer number of
+                                       # seconds from the current time.
+                                       # The parser (dateutil.parser) is
+                                       # quite liberal, but your mileage may
+                                       # vary.
+        'interval': 5, # Optional; Only for regular messages;
+                       #Number of seconds to display this message before
+                       # switching to the next
+        'timeout': 300,  # Optional; Only for flash messages;
+                         # Number of seconds until message disappears
         'backlight': True,  # Optional; Backlight on or off
     }
 
