@@ -145,7 +145,7 @@ class LcdManager(object):
 
     @command
     def set_contrast(self, value):
-        logger.info('Setting brightness to %s', value)
+        logger.info('Setting contrast to %s', value)
         self.contrast = value
         self.send('\xfe\x50%s' % chr(value))
 
