@@ -8,7 +8,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='twoline',
-    version='0.7.7',
+    version='0.7.8',
     url='http://bitbucket.org/latestrevision/twoline/',
     description='Manager for simple character LCDs',
     author='Adam Coddington',
