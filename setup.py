@@ -9,7 +9,7 @@ with open('requirements.txt') as f:
 setup(
     name='twoline',
     version='0.7.8',
-    url='http://bitbucket.org/latestrevision/twoline/',
+    url='http://github.com/latestrevision/twoline/',
     description='Manager for simple character LCDs',
     author='Adam Coddington',
     author_email='me@adamcoddington.net',
