@@ -93,14 +93,14 @@ class LcdManager(object):
     def handle_text_cycle(self):
         if len(self.message_lines) <= self.text_idx:
             self.text_idx = 0
-        self.send('\xfe\x4700')
+        self.send('\xfe\x48')
         cleaned_lines = [
             line.ljust(self.size[0])
             for line in self.message_lines[
                 self.text_idx:self.text_idx+self.size[1]
             ]
         ]
-        display_text = ''.join(cleaned_lines)[0:self.size[0]*self.size[1]-1]
+        display_text = ''.join(cleaned_lines)[0:self.size[0]*self.size[1]]
         if not display_text:
             self.off()
         self.send(display_text.encode('ascii', 'replace'))
