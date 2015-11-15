@@ -58,7 +58,9 @@ class LcdManager(object):
             (1.0 / self.sleep) * text_cycle_interval
         )
 
+    def initialize(self):
         self.clear()
+        self.send('\xfe\x52')  # Disable autoscroll
 
     def run(self):
         while True:
@@ -91,6 +93,7 @@ class LcdManager(object):
         if len(self.message_lines) <= self.text_idx:
             self.text_idx = 0
         self.send('\xfe\x58')
+        self.send('\xfe\x48')
         cleaned_lines = [
             line.ljust(self.size[0])
             for line in self.message_lines[
@@ -98,7 +101,10 @@ class LcdManager(object):
             ]
         ]
         display_text = ''.join(cleaned_lines)
-        self.send(display_text.encode('ascii', 'replace'))
+        self.send(
+            display_text.encode('ascii', 'replace'),
+            text=True
+        )
         if not display_text:
             self.off()
         self.text_idx += 2
@@ -120,10 +126,10 @@ class LcdManager(object):
             msg, data
         ))
 
-    def send(self, cmd):
+    def send(self, cmd, text=False):
         try:
             with open(self.device_path, 'wb') as dev:
-                dev.write(cmd + '\n')
+                dev.write(cmd + '\n' if text else '')
         except IOError:
             logger.error(
                 'Device unavailable; command \'%s\' dropped.',

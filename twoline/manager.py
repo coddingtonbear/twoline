@@ -335,6 +335,7 @@ class Manager(object):
                 blink_interval=self.blink_interval,
                 text_cycle_interval=self.text_cycle_interval
             )
+            mgr.initialize()
             mgr.run()
 
         process = multiprocessing.Process(
