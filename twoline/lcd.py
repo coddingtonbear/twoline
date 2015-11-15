@@ -123,7 +123,7 @@ class LcdManager(object):
             msg, data
         ))
 
-    def send(self, cmd, text=False):
+    def send(self, cmd):
         try:
             with open(self.device_path, 'w') as dev:
                 dev.write(cmd + '\n')
