@@ -101,10 +101,7 @@ class LcdManager(object):
             ]
         ]
         display_text = ''.join(cleaned_lines)
-        self.send(
-            display_text.encode('ascii', 'replace'),
-            text=True
-        )
+        self.send(display_text.encode('ascii', 'replace'))
         if not display_text:
             self.off()
         self.text_idx += 2
@@ -128,8 +125,8 @@ class LcdManager(object):
 
     def send(self, cmd, text=False):
         try:
-            with open(self.device_path, 'wb') as dev:
-                dev.write(cmd + '\n' if text else '')
+            with open(self.device_path, 'w') as dev:
+                dev.write(cmd + '\n')
         except IOError:
             logger.error(
                 'Device unavailable; command \'%s\' dropped.',
