@@ -123,7 +123,7 @@ class LcdManager(object):
             msg, data
         ))
 
-    def send_raw(self, cmd):
+    def send(self, cmd):
         logger.debug(
             'Sending command: "%s"' % cmd.encode('string-escape')
         )
@@ -135,10 +135,6 @@ class LcdManager(object):
                 'Device unavailable; command \'%s\' dropped.',
                 cmd
             )
-
-    def send(self, cmd):
-        cmd = cmd + '\n'
-        self.send_raw(cmd)
 
     def get_message_lines(self, message):
         lines = []
@@ -218,6 +214,4 @@ class LcdManager(object):
     def set_backlight_color(self, color):
         logger.debug('Setting backlight color to %s', color)
         self.color = color
-        self.send_raw(
-            '\xfe\xd0%s%s%s' % tuple([chr(c) for c in color])
-        )
+        self.send('\xfe\xd0%s%s%s' % tuple([chr(c) for c in color]))
