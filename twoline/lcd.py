@@ -102,7 +102,6 @@ class LcdManager(object):
         if not display_text:
             self.off()
         self.send(display_text.encode('ascii', 'replace'))
-        self.send(display_text.encode('ascii', 'replace'))
         self.text_idx += 2
 
     def handle_blink(self):
