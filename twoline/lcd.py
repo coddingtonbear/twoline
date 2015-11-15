@@ -127,7 +127,7 @@ class LcdManager(object):
         try:
             cmd = cmd + '\n'
             logger.debug(
-                'Sending command: "%s"' % cmd.encode('unicode-escape')
+                'Sending command: "%s"' % cmd.encode('string-escape')
             )
             with open(self.device_path, 'wb') as dev:
                 dev.write(cmd)
