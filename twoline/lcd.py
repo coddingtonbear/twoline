@@ -41,7 +41,6 @@ class LcdManager(object):
         self.message = ''
         self.message_lines = []
         self.color = 0, 0, 0
-        self.backlight = True
 
         self.sleep = 0.1
 
@@ -171,11 +170,11 @@ class LcdManager(object):
             self.set_blink([])
         if not self.blink and message['color'] != self.color:
             self.set_backlight_color(message['color'])
-        if message['backlight'] != self.backlight:
-            if message['backlight']:
-                self.on()
-            else:
-                self.off()
+
+        if message['backlight']:
+            self.on()
+        else:
+            self.off()
 
     @command
     def set_blink(self, colors):
@@ -196,13 +195,11 @@ class LcdManager(object):
     @command
     def off(self, *args):
         logger.debug('Setting backlight to off')
-        self.backlight = False
         self.send('\xfe\x46')
 
     @command
     def on(self, *args):
         logger.debug('Setting backlight to on')
-        self.backlight = True
         self.send('\xfe\x42')
 
     @command
