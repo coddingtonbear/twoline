@@ -1,5 +1,6 @@
 from functools import wraps
 import logging
+import re
 import time
 
 
@@ -141,7 +142,7 @@ class LcdManager(object):
 
     def get_message_lines(self, message):
         lines = []
-        original_lines = message.split('\r')
+        original_lines = re.split('\r|\n', message)
         for line in original_lines:
             lines.extend(
                 line[i:i+self.size[0]]
