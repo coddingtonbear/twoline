@@ -16,6 +16,9 @@ def run_from_cmdline():
         '--loglevel', '-l', dest='loglevel', default='INFO'
     )
     parser.add_option(
+        '--logpath', dest='logpath', default=None
+    )
+    parser.add_option(
         '--size-x', '-x', dest='size_x', default='16',
     )
     parser.add_option(
@@ -33,9 +36,15 @@ def run_from_cmdline():
     if len(args) != 1:
         parser.error('Device required (usually a path in /dev/)')
 
-    logging.basicConfig(
-        level=logging.getLevelName(options.loglevel)
-    )
+    if options.logpath:
+        lp_logger = logging.getLogger(options.logpath)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(options.loglevel)
+        lp_logger.addHandler(stream_handler)
+    else:
+        logging.basicConfig(
+            level=logging.getLevelName(options.loglevel)
+        )
 
     manager = Manager(*args, **vars(options))
     manager.run()
