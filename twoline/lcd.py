@@ -126,18 +126,18 @@ class LcdManager(object):
         logger.debug(
             'Sending command: "%s"' % cmd.encode('string-escape')
         )
-        with open(self.device_path, 'w') as dev:
-            dev.write(cmd)
-
-    def send(self, cmd):
         try:
-            cmd = cmd + '\n'
-            self.send_raw(cmd)
+            with open(self.device_path, 'w') as dev:
+                dev.write(cmd)
         except IOError:
             logger.error(
                 'Device unavailable; command \'%s\' dropped.',
                 cmd
             )
+
+    def send(self, cmd):
+        cmd = cmd + '\n'
+        self.send_raw(cmd)
 
     def get_message_lines(self, message):
         lines = []
