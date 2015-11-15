@@ -99,9 +99,10 @@ class LcdManager(object):
             ]
         ]
         display_text = ''.join(cleaned_lines)[0:self.size[0]*self.size[1]-1]
-        self.send(display_text.encode('ascii', 'replace'))
         if not display_text:
             self.off()
+        self.send(display_text.encode('ascii', 'replace'))
+        self.send(display_text.encode('ascii', 'replace'))
         self.text_idx += 2
 
     def handle_blink(self):
