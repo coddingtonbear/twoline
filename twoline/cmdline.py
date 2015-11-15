@@ -1,5 +1,5 @@
 import json
-import logging
+import logging.config
 from optparse import OptionParser
 
 from twoline.manager import Manager
