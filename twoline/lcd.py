@@ -91,7 +91,6 @@ class LcdManager(object):
     def handle_text_cycle(self):
         if len(self.message_lines) <= self.text_idx:
             self.text_idx = 0
-        self.send('\xfe\x58')
         self.send('\xfe\x4700')
         cleaned_lines = [
             line.ljust(self.size[0])
@@ -162,19 +161,20 @@ class LcdManager(object):
 
     @command
     def message(self, message):
+        if message['backlight']:
+            self.on()
+        else:
+            self.off()
+
         if 'message' in message and self.message != message['message']:
             self.set_message(message['message'])
+
         if 'blink' in message and self.blink != message['blink']:
             self.set_blink(message['blink'])
         if not 'blink' in message:
             self.set_blink([])
         if not self.blink and message['color'] != self.color:
             self.set_backlight_color(message['color'])
-
-        if message['backlight']:
-            self.on()
-        else:
-            self.off()
 
     @command
     def set_blink(self, colors):
