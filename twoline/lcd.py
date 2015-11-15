@@ -30,7 +30,7 @@ def command(fn):
 
 
 class LcdManager(object):
-    def __init__(self, device_path, pipe, size=None,
+    def __init__(self, device_path, pipe=None, size=None,
             blink_interval=0.25, text_cycle_interval=2, size_x=16, size_y=2):
         self.device_path = device_path
         self.pipe = pipe
@@ -59,7 +59,7 @@ class LcdManager(object):
         )
 
     def initialize(self):
-        self.send('\xfe\x51')
+        self.send('\xfe\x52')
         self.clear()
 
     def run(self):
@@ -123,14 +123,17 @@ class LcdManager(object):
             msg, data
         ))
 
+    def send_raw(self, cmd):
+        with open(self.device_path, 'w') as dev:
+            dev.write(cmd)
+
     def send(self, cmd):
         try:
             cmd = cmd + '\n'
             logger.debug(
                 'Sending command: "%s"' % cmd.encode('string-escape')
             )
-            with open(self.device_path, 'w') as dev:
-                dev.write(cmd)
+            self.send_raw(cmd)
         except IOError:
             logger.error(
                 'Device unavailable; command \'%s\' dropped.',
