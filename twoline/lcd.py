@@ -123,15 +123,15 @@ class LcdManager(object):
         ))
 
     def send_raw(self, cmd):
+        logger.debug(
+            'Sending command: "%s"' % cmd.encode('string-escape')
+        )
         with open(self.device_path, 'w') as dev:
             dev.write(cmd)
 
     def send(self, cmd):
         try:
             cmd = cmd + '\n'
-            logger.debug(
-                'Sending command: "%s"' % cmd.encode('string-escape')
-            )
             self.send_raw(cmd)
         except IOError:
             logger.error(
@@ -217,4 +217,6 @@ class LcdManager(object):
     def set_backlight_color(self, color):
         logger.debug('Setting backlight color to %s', color)
         self.color = color
-        self.send('\xfe\xd0%s%s%s' % tuple([chr(c) for c in color]))
+        self.send_raw(
+            '\xfe\xd0%s%s%s' % tuple([chr(c) for c in color])
+        )
