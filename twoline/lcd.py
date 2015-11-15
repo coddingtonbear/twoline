@@ -124,6 +124,7 @@ class LcdManager(object):
 
     def send(self, cmd):
         try:
+            logger.debug('Sending command: %s' % cmd)
             with open(self.device_path, 'w') as dev:
                 dev.write(cmd + '\n')
         except IOError:
