@@ -38,6 +38,7 @@ def run_from_cmdline():
 
     if options.logpath:
         lp_logger = logging.getLogger(options.logpath)
+        lp_logger.setLevel(options.loglevel)
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(options.loglevel)
         lp_logger.addHandler(stream_handler)
