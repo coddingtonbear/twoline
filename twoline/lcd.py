@@ -129,7 +129,7 @@ class LcdManager(object):
             logger.debug(
                 'Sending command: "%s"' % cmd.encode('string-escape')
             )
-            with open(self.device_path, 'wb') as dev:
+            with open(self.device_path, 'w') as dev:
                 dev.write(cmd)
         except IOError:
             logger.error(
