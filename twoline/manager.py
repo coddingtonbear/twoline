@@ -415,14 +415,14 @@ class Manager(object):
 
     @web_command
     def get_message_by_id(self, id_):
-        idx = self.get_message_index_by_id(self.message_id)
+        idx = self.get_message_index_by_id(id_)
         if idx is None:
             raise NotFound('Message %s does not exist' % id_)
         return self.messages[idx]
 
     @web_command
     def delete_message_by_id(self, id_):
-        idx = self.get_message_index_by_id(self.message_id)
+        idx = self.get_message_index_by_id(id_)
         if idx is None:
             raise NotFound('Message %s does not exist' % id_)
         self.delete_message(id_)
@@ -431,7 +431,7 @@ class Manager(object):
     @web_command
     def put_message_by_id(self, id_, message_payload):
         message = json.loads(message_payload)
-        idx = self.get_message_index_by_id(self.message_id)
+        idx = self.get_message_index_by_id(id_)
         if idx is None:
             message['id'] = id_
             self.messages.append(self.process_message(message))
@@ -444,7 +444,7 @@ class Manager(object):
     @web_command
     def patch_message_by_id(self, id_, message_payload):
         message = json.loads(message_payload)
-        idx = self.get_message_index_by_id(self.message_id)
+        idx = self.get_message_index_by_id(id_)
         if idx is None:
             raise NotFound('Message %s does not exist' % id_)
         original_message = self.messages[idx]
