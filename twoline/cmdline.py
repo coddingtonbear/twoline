@@ -1,3 +1,4 @@
+import json
 import logging
 from optparse import OptionParser
 
@@ -16,7 +17,7 @@ def run_from_cmdline():
         '--loglevel', '-l', dest='loglevel', default='INFO'
     )
     parser.add_option(
-        '--logpath', dest='logpath', default=None
+        '--logcfg', dest='logcfg', default=None
     )
     parser.add_option(
         '--size-x', '-x', dest='size_x', default='16',
@@ -36,12 +37,11 @@ def run_from_cmdline():
     if len(args) != 1:
         parser.error('Device required (usually a path in /dev/)')
 
-    if options.logpath:
-        lp_logger = logging.getLogger(options.logpath)
-        lp_logger.setLevel(options.loglevel)
-        stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(options.loglevel)
-        lp_logger.addHandler(stream_handler)
+    if options.logcfg:
+        with open(options.logcfg, 'r') as in_:
+            logging.config.dictConfig(
+                json.loads(in_.read())
+            )
     else:
         logging.basicConfig(
             level=logging.getLevelName(options.loglevel)
