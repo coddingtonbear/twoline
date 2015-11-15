@@ -60,7 +60,6 @@ class LcdManager(object):
 
     def initialize(self):
         self.clear()
-        self.send('\xfe\x52')  # Disable autoscroll
 
     def run(self):
         while True:
