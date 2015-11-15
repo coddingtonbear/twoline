@@ -303,6 +303,7 @@ class Manager(object):
         try:
             message = self.get_current_message()
         except TypeError:
+            self.message_id = None
             message = None
 
         if not message:
