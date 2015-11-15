@@ -59,7 +59,7 @@ class LcdManager(object):
         )
 
     def initialize(self):
-        self.send('\xfe\x52')
+        self.send('\xfe\x51')
         self.clear()
 
     def run(self):
