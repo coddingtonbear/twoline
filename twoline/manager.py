@@ -300,7 +300,17 @@ class Manager(object):
             return self.get_no_messages_message()
 
     def update_screen(self):
-        message = self.get_current_message()
+        try:
+            message = self.get_current_message()
+        except TypeError:
+            message = None
+
+        if not message:
+            logger.warning(
+                "Message was lost before it could be displayed; skipping."
+            )
+            return
+
         self.send_lcd_data(
             'message', message
         )
