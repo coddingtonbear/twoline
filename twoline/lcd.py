@@ -93,7 +93,7 @@ class LcdManager(object):
         if len(self.message_lines) <= self.text_idx:
             self.text_idx = 0
         self.send('\xfe\x58')
-        self.send('\xfe\x48')
+        self.send('\xfe\x4711')
         cleaned_lines = [
             line.ljust(self.size[0])
             for line in self.message_lines[
