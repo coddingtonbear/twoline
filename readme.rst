@@ -2,11 +2,16 @@
 Twoline
 =======
 
-A simple manager for two-line LCD displays.
+Easily display messages on your `two-line LCD screen <http://www.adafruit.com/products/784>`_.
 
-Specifically, this was created for the
-`Adafruit USB + Serial Backpack Kit with 16x2 RGB backlight negative LCD - RGB on Black <http://www.adafruit.com/products/784>`_,
-but this should be easily adaptable to many other character LCD displays.
+Features
+--------
+
+* **Network accessible**:  Posting a message on your screen is as easy as a simple ``curl`` command.
+* **Automatic rotation**:  If you send multiple messages to the screen for display, Twoline will rotate through them for you automatically.
+* **Automatic paging**:  Your screen can only show 32 characters at a time?  Don't worry; Twoline will page through your message for you.
+* **Easy color and blinking configuration**: Every message can have its own color.
+* **Message expiration**: Can't be bothered to send a ``DELETE`` to remove your message when its no longer relevant?  Just set your messages's ``expires`` key and Twoline will automatically remove the message when it's over.
 
 
 URLS
@@ -75,9 +80,10 @@ Message Object
         'backlight': True,  # Optional; Backlight on or off
     }
 
+Simple Curl Example
+-------------------
 
+To post a message to your screen using ``curl`` just run a command like the below:
 
-.. image:: https://d2weczhvl823v0.cloudfront.net/coddingtonbear/twoline/trend.png
-   :alt: Bitdeli badge
-   :target: https://bitdeli.com/free
-
+::
+    curl -i -X POST -H "Content-Type: application/json" -d '{"message": "Hello World"}' http://127.0.0.1:6224/message/
