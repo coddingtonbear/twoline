@@ -86,4 +86,7 @@ Simple Curl Example
 To post a message to your screen using ``curl`` just run a command like the below:
 
 ::
+
     curl -i -X POST -H "Content-Type: application/json" -d '{"message": "Hello World"}' http://127.0.0.1:6224/message/
+
+Pretty easy, huh?!
