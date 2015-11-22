@@ -38,17 +38,16 @@ def command(fn):
 class LcdCommand(object):
     COMMAND_PREFIX = '\xfe'
 
-    def __init__(self, byte, args=None, newline_prefix=True):
+    def __init__(self, byte, args=None, prefix='\n'):
         if args is None:
             args = []
 
         self._byte = byte
         self._args = args
+        self._prefix = '\n'
 
     def build_command(self, *args):
-        cmd = ''
-        if self.newline_prefix:
-            cmd += '\n'
+        cmd = self._prefix
 
         if len(args) != len(self._args):
             raise LcdCommandError(
@@ -96,7 +95,7 @@ class LcdClient(object):
         'cursor_block_on': LcdCommand('\x53'),
         'cursor_block_off': LcdCommand('\x54'),
         'set_backlight_color': LcdCommand(
-            '\xd0', args=[chr, chr, chr], newline_prefix=False,
+            '\xd0', args=[chr, chr, chr], prefix='',
         ),
         'set_lcd_size': LcdCommand('\xd1', args=[chr, chr]),
         'gpo_off': LcdCommand('\x56'),
