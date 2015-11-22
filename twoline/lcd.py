@@ -70,9 +70,7 @@ class LcdCommand(object):
 
         cmd += self._byte
 
-        import ipdb
-        ipdb.set_trace()
-        for idx, processor in self._args:
+        for idx, processor in enumerate(self._args):
             arg = args[idx]
             cmd += str(processor(arg))
 
