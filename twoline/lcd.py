@@ -48,17 +48,15 @@ class CallableLcdCommand(object):
 class LcdCommand(object):
     COMMAND_PREFIX = '\xfe'
 
-    def __init__(self, byte, args=None, prefix='\n'):
+    def __init__(self, byte, args=None):
         if args is None:
             args = []
 
         self._byte = byte
         self._args = args
-        self._prefix = prefix
 
     def build_command(self, *args):
-        cmd = self._prefix
-        cmd += self.COMMAND_PREFIX
+        cmd = self.COMMAND_PREFIX
 
         if len(args) != len(self._args):
             raise LcdCommandError(
@@ -105,9 +103,7 @@ class LcdClient(object):
         'cursor_underline_off': LcdCommand('\x4b'),
         'cursor_block_on': LcdCommand('\x53'),
         'cursor_block_off': LcdCommand('\x54'),
-        'set_backlight_color': LcdCommand(
-            '\xd0', args=[chr, chr, chr], prefix='',
-        ),
+        'set_backlight_color': LcdCommand('\xd0', args=[chr, chr, chr]),
         'set_lcd_size': LcdCommand('\xd1', args=[chr, chr]),
         'gpo_off': LcdCommand('\x56'),
         'gpo_on': LcdCommand('\x57'),
