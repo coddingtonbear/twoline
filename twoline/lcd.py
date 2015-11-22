@@ -34,6 +34,16 @@ def command(fn):
     return fn
 
 
+class CallableLcdCommand(object):
+    def __init__(self, manager, command):
+        self._manager = manager
+        self._command = command
+
+    def __call__(self, *args):
+        result = self._command(*args)
+        self._manager.send(result)
+
+
 @six.python_2_unicode_compatible
 class LcdCommand(object):
     COMMAND_PREFIX = '\xfe'
@@ -109,8 +119,7 @@ class LcdClient(object):
         if name not in self.COMMANDS:
             raise AttributeError(name)
 
-        value = self.COMMANDS[name]()
-        self.send(value)
+        return CallableLcdCommand(self, self.COMMANDS[name])
 
     def send(self, cmd):
         logger.debug(
