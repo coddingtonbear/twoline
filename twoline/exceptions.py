@@ -12,3 +12,7 @@ class BadRequest(Exception):
 
 class UnexpectedError(Exception):
     pass
+
+
+class LcdCommandError(Exception):
+    pass

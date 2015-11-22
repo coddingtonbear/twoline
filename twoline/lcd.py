@@ -3,6 +3,10 @@ import logging
 import re
 import time
 
+import six
+
+from .exceptions import LcdCommandError
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +34,112 @@ def command(fn):
     return fn
 
 
-class LcdManager(object):
-    def __init__(self, device_path, pipe=None, size=None,
-            blink_interval=0.25, text_cycle_interval=2, size_x=16, size_y=2):
+@six.python_2_unicode_compatible
+class LcdCommand(object):
+    COMMAND_PREFIX = '\xfe'
+
+    def __init__(self, byte, args=None, newline_prefix=True):
+        if args is None:
+            args = []
+
+        self._byte = byte
+        self._args = args
+
+    def build_command(self, *args):
+        cmd = ''
+        if self.newline_prefix:
+            cmd += '\n'
+
+        if len(args) != len(self._args):
+            raise LcdCommandError(
+                "Argument count mismatch; expected {expected}, but "
+                "only {actual} were received.".format(
+                    expected=len(self._args),
+                    actual=len(args),
+                )
+            )
+
+        cmd += self._byte
+
+        for idx, processor in self._args:
+            arg = args[idx]
+            cmd += str(processor(arg))
+
+        return cmd
+
+    def __call__(self, *args):
+        return self.build_command(*args)
+
+    def __str__(self):
+        return u'LCD Command "{command}"'.format(
+            command=self._byte.encode('string-escape')
+        )
+
+
+@six.python_2_unicode_compatible
+class LcdClient(object):
+    COMMANDS = {
+        'on': LcdCommand('\x42', args=[chr]),
+        'off': LcdCommand('\x46'),
+        'set_brightness': LcdCommand('\x99', args=[chr]),
+        'set_contrast': LcdCommand('\x50', args=[chr]),
+        'enable_autoscroll': LcdCommand('\x51'),
+        'disable_autoscroll': LcdCommand('\x52'),
+        'clear': LcdCommand('\x58'),
+        'set_splash_screen': LcdCommand('\x40', args=[str]),
+        'set_cursor_position': LcdCommand('\x47', args=[chr, chr]),
+        'cursor_home': LcdCommand('\x48'),
+        'cursor_back': LcdCommand('\x4c'),
+        'cursor_forward': LcdCommand('\x4d'),
+        'cursor_underline_on': LcdCommand('\x4a'),
+        'cursor_underline_off': LcdCommand('\x4b'),
+        'cursor_block_on': LcdCommand('\x53'),
+        'cursor_block_off': LcdCommand('\x54'),
+        'set_backlight_color': LcdCommand(
+            '\xd0', args=[chr, chr, chr], newline_prefix=False,
+        ),
+        'set_lcd_size': LcdCommand('\xd1', args=[chr, chr]),
+        'gpo_off': LcdCommand('\x56'),
+        'gpo_on': LcdCommand('\x57'),
+    }
+
+    def __init__(self, device_path):
         self.device_path = device_path
+
+    def __getattr__(self, name):
+        if name not in self.COMMANDS:
+            raise AttributeError(name)
+
+        value = self.COMMANDS[name]()
+        self.send(value)
+
+    def send(self, cmd):
+        logger.debug(
+            'Sending command: "%s"' % cmd.encode('string-escape')
+        )
+        try:
+            with open(self.device_path, 'wb') as dev:
+                dev.write(cmd)
+        except IOError:
+            logger.error(
+                'Device unavailable; command \'%s\' dropped.',
+                cmd
+            )
+
+    def send_text(self, text):
+        self.send(text.encode('ascii', 'replace'))
+
+    def __str__(self):
+        return 'LCD Screen at {path}'.format(path=self.device_path)
+
+
+class LcdManager(object):
+    def __init__(
+        self, device_path, pipe=None, size=None,
+        blink_interval=0.25, text_cycle_interval=2, size_x=16, size_y=2
+    ):
+        self.client = LcdClient(device_path)
+
         self.pipe = pipe
         if not size:
             size = [16, 2]
@@ -60,7 +166,7 @@ class LcdManager(object):
         )
 
     def initialize(self):
-        self.send('\xfe\x52')
+        self.client.disable_autoscroll()
         self.clear()
 
     def run(self):
@@ -93,7 +199,8 @@ class LcdManager(object):
     def handle_text_cycle(self):
         if len(self.message_lines) <= self.text_idx:
             self.text_idx = 0
-        self.send('\xfe\x48')
+
+        self.client.cursor_home()
         cleaned_lines = [
             line.ljust(self.size[0])
             for line in self.message_lines[
@@ -103,7 +210,7 @@ class LcdManager(object):
         display_text = ''.join(cleaned_lines)[0:self.size[0]*self.size[1]]
         if not display_text:
             self.off()
-        self.send(display_text.encode('ascii', 'replace'))
+        self.client.send_text(display_text)
         self.text_idx += 2
 
     def handle_blink(self):
@@ -112,7 +219,9 @@ class LcdManager(object):
         self.blink_idx += 1
         if len(self.blink) <= self.blink_idx:
             self.blink_idx = 0
-        self.set_backlight_color(self.blink[self.blink_idx])
+        self.client.set_backlight_color(
+            *self.blink[self.blink_idx]
+        )
 
     def send_manager_data(self, msg, data=None):
         if not data:
@@ -123,19 +232,6 @@ class LcdManager(object):
             msg, data
         ))
 
-    def send(self, cmd):
-        logger.debug(
-            'Sending command: "%s"' % cmd.encode('string-escape')
-        )
-        try:
-            with open(self.device_path, 'w') as dev:
-                dev.write(cmd)
-        except IOError:
-            logger.error(
-                'Device unavailable; command \'%s\' dropped.',
-                cmd
-            )
-
     def get_message_lines(self, message):
         lines = []
         original_lines = re.split('\r|\n', message)
@@ -144,18 +240,17 @@ class LcdManager(object):
                 line[i:i+self.size[0]]
                 for i in range(0, len(line), self.size[0])
             )
-        logger.debug(lines)
         return lines
 
     @command
     def set_contrast(self, value):
         logger.debug('Setting contrast to %s', value)
-        self.send('\xfe\x50%s' % chr(value))
+        self.client.set_contrast(value)
 
     @command
     def set_brightness(self, value):
         logger.debug('Setting brightness to %s', value)
-        self.send('\xfe\x99%s' % chr(value))
+        self.client.set_brightness(value)
 
     @command
     def message(self, message):
@@ -195,23 +290,23 @@ class LcdManager(object):
     def off(self, *args):
         logger.debug('Setting backlight to off')
         self.backlight = False
-        self.send('\xfe\x46')
+        self.client.off()
 
     @command
     def on(self, *args):
         logger.debug('Setting backlight to on')
         self.backlight = True
-        self.send('\xfe\x42')
+        self.client.on()
 
     @command
     def clear(self, *args):
         self.message = ''
         self.text_idx = 0
         self.message_lines = []
-        self.send('\xfe\x58')
+        self.client.clear()
 
     @command
     def set_backlight_color(self, color):
         logger.debug('Setting backlight color to %s', color)
         self.color = color
-        self.send('\xfe\xd0%s%s%s' % tuple([chr(c) for c in color]))
+        self.client.set_backlight_color(*color)
