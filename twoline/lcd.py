@@ -46,7 +46,7 @@ class CallableLcdCommand(object):
 
 @six.python_2_unicode_compatible
 class LcdCommand(object):
-    COMMAND_PREFIX = '\xfe'
+    COMMAND_PREFIX = '\n\xfe'
 
     def __init__(self, byte, args=None):
         if args is None:
