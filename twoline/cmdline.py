@@ -46,7 +46,7 @@ def run_from_cmdline():
         logging.basicConfig(
             level=logging.getLevelName(options.loglevel),
             format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-            datefmt='%H:%M:%S',
+            datefmt='%H:%M:%S.%f',
         )
 
     manager = Manager(*args, **vars(options))
