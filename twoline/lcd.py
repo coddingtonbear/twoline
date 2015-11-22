@@ -54,7 +54,7 @@ class LcdCommand(object):
 
         self._byte = byte
         self._args = args
-        self._prefix = '\n'
+        self._prefix = prefix
 
     def build_command(self, *args):
         cmd = self._prefix
@@ -70,6 +70,8 @@ class LcdCommand(object):
 
         cmd += self._byte
 
+        import ipdb
+        ipdb.set_trace()
         for idx, processor in self._args:
             arg = args[idx]
             cmd += str(processor(arg))
