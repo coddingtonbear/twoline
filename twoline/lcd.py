@@ -46,14 +46,15 @@ class CallableLcdCommand(object):
 
 @six.python_2_unicode_compatible
 class LcdCommand(object):
-    COMMAND_PREFIX = '\n\xfe'
+    COMMAND_PREFIX = '\xfe'
 
-    def __init__(self, byte, args=None):
+    def __init__(self, byte, args=None, prefix='\n'):
         if args is None:
             args = []
 
         self._byte = byte
         self._args = args
+        self._prefix = prefix
 
     def build_command(self, *args):
         cmd = self.COMMAND_PREFIX
@@ -96,13 +97,13 @@ class LcdClient(object):
         'clear': LcdCommand('\x58'),
         'set_splash_screen': LcdCommand('\x40', args=[str]),
         'set_cursor_position': LcdCommand('\x47', args=[chr, chr]),
-        'cursor_home': LcdCommand('\x48'),
-        'cursor_back': LcdCommand('\x4c'),
-        'cursor_forward': LcdCommand('\x4d'),
-        'cursor_underline_on': LcdCommand('\x4a'),
-        'cursor_underline_off': LcdCommand('\x4b'),
-        'cursor_block_on': LcdCommand('\x53'),
-        'cursor_block_off': LcdCommand('\x54'),
+        'cursor_home': LcdCommand('\x48', prefix=''),
+        'cursor_backward': LcdCommand('\x4c', prefix=''),
+        'cursor_forward': LcdCommand('\x4d', prefix=''),
+        'cursor_underline_on': LcdCommand('\x4a', prefix=''),
+        'cursor_underline_off': LcdCommand('\x4b', prefix=''),
+        'cursor_block_on': LcdCommand('\x53', prefix=''),
+        'cursor_block_off': LcdCommand('\x54', prefix=''),
         'set_backlight_color': LcdCommand('\xd0', args=[chr, chr, chr]),
         'set_lcd_size': LcdCommand('\xd1', args=[chr, chr]),
         'gpo_off': LcdCommand('\x56'),
