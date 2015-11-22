@@ -58,6 +58,7 @@ class LcdCommand(object):
 
     def build_command(self, *args):
         cmd = self._prefix
+        cmd += self.COMMAND_PREFIX
 
         if len(args) != len(self._args):
             raise LcdCommandError(
