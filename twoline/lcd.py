@@ -260,7 +260,8 @@ class LcdManager(object):
 
     @command
     def message(self, message):
-        if not message:
+        # If the backlight is off, just turn it off and be done with it.
+        if message['backlight'] != self.backlight and not message['backlight']:
             self.off()
             return
 

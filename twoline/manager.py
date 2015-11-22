@@ -219,6 +219,14 @@ class Manager(object):
         logger.debug("Final Message: %s", default)
         return default
 
+    def get_no_messages_message(self):
+        message = self.no_messages
+        default = self.default_message.copy()
+        default.update(
+            message
+        )
+        return default
+
     def get_message_index_by_id(self, id_):
         for message in self.messages:
             if message['id'] == id_:
@@ -289,7 +297,7 @@ class Manager(object):
                 )
             return message
         else:
-            return {}
+            return self.get_no_messages_message()
 
     def update_screen(self):
         try:
