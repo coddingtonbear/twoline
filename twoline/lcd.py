@@ -302,7 +302,7 @@ class LcdManager(object):
     def on(self, *args):
         logger.debug('Setting backlight to on')
         self.backlight = True
-        self.client.on()
+        self.client.on(255)
 
     @command
     def clear(self, *args):
