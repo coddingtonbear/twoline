@@ -399,6 +399,19 @@ class Manager(object):
         )
         return local, process
 
+    def _get_message_from_string(self, message):
+        try:
+            return json.loads(message)
+        except ValueError:
+            logger.debug(
+                "Failed to decode message '%s'; assuming it is instead "
+                "a string message.",
+                message,
+            )
+            return {
+                "message": message,
+            }
+
     def process_message(self, message, ignore_id=False):
         if 'expires' in message:
             if isinstance(message['expires'], datetime.datetime):
@@ -451,7 +464,7 @@ class Manager(object):
 
     @web_command
     def put_message_by_id(self, id_, message_payload):
-        message = json.loads(message_payload)
+        message = self._get_message_from_string(message_payload)
         idx = self.get_message_index_by_id(id_)
         if idx is None:
             message['id'] = id_
@@ -464,7 +477,7 @@ class Manager(object):
 
     @web_command
     def patch_message_by_id(self, id_, message_payload):
-        message = json.loads(message_payload)
+        message = self._get_message_from_string(message_payload)
         idx = self.get_message_index_by_id(id_)
         if idx is None:
             raise NotFound('Message %s does not exist' % id_)
@@ -503,7 +516,7 @@ class Manager(object):
 
     @web_command
     def post_message(self, message_payload):
-        message = json.loads(message_payload)
+        message = self._get_message_from_string(message_payload)
         self.messages.append(
             self.process_message(
                 message,
@@ -515,7 +528,7 @@ class Manager(object):
     @web_command
     def put_flash(self, message_payload):
         self.flash = self.process_message(
-            json.loads(
+            self._get_message_from_string(
                 message_payload
             )
         )
