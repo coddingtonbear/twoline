@@ -3,6 +3,7 @@ from functools import wraps
 import json
 import logging
 import multiprocessing
+import os
 import time
 import uuid
 
@@ -81,6 +82,7 @@ class Manager(object):
     def __init__(
         self, device, ip='0.0.0.0', port=9101,
         size_x=16, size_y=2, blink_interval=0.25, text_cycle_interval=2,
+        default_message_template=None, default_flash_template=None,
         *args, **kwargs
     ):
         self.ip = ip
@@ -98,16 +100,22 @@ class Manager(object):
             'backlight': False,
             'message': ''
         }
-        self.default_message = {
-            'color': (255, 255, 255),
-            'backlight': True,
-            'interval': 5
-        }
-        self.default_flash = {
-            'blink': [(255, 0, 0), (0, 0, 0)],
-            'backlight': True,
-            'timeout': 10
-        }
+        self.default_message = self._read_config_json_or_default(
+            default_message_template,
+            {
+                'color': (255, 255, 255),
+                'backlight': True,
+                'interval': 5
+            }
+        )
+        self.default_flash = self._read_config_json_or_default(
+            default_flash_template,
+            {
+                'blink': [(255, 0, 0), (0, 0, 0)],
+                'backlight': True,
+                'timeout': 10
+            }
+        )
         self.flash = None
         self.flash_until = None
         self.messages = []
@@ -115,6 +123,19 @@ class Manager(object):
         self.until = None
 
         self.sleep = 0.2
+
+    def _read_config_json_or_default(self, json_file_or_string, default):
+        if json_file_or_string is None:
+            return default
+
+        # If the file is a path, try reading JSON out of that path
+        expanded_path = os.path.expanduser(json_file_or_string)
+        if os.path.isfile(expanded_path):
+            with open(expanded_path, 'r') as inf:
+                return json.load(inf)
+
+        # Otherwise, try parsing it as JSON directly
+        return json.loads(json_file_or_string)
 
     @property
     def message_id(self):

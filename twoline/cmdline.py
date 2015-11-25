@@ -31,6 +31,18 @@ def run_from_cmdline():
     parser.add_option(
         '--blink-interval', dest='blink_interval', default='0.25'
     )
+    parser.add_option(
+        '--default-message-template',
+        dest='default_message_template',
+        default=None,
+        help='JSON file path or string',
+    )
+    parser.add_option(
+        '--default-flash-template',
+        dest='default_flash_template',
+        default=None,
+        help='JSON file path or string',
+    )
 
     options, args = parser.parse_args()
 
